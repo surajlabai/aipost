@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PrivChat">
-<title>PrivChat · Premium Private Messaging</title>
+<title> SMARTCHAT · Premium Private Messaging</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -94,17 +94,39 @@
   .list-area::-webkit-scrollbar { width: 4px; }
   .list-area::-webkit-scrollbar-thumb { background: #6b9eff; border-radius: 10px; }
 
-  .list-item { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 14px; cursor: pointer; transition: all 0.18s ease; margin-bottom: 3px; position: relative; }
+  .list-item { display: flex; align-items: center; gap: 8px; padding: 11px 13px; border-radius: 14px; cursor: pointer; transition: all 0.18s ease; margin-bottom: 3px; position: relative; }
   .list-item:hover { background: rgba(59,130,246,0.1); }
   .list-item.active { background: linear-gradient(135deg, rgba(59,130,246,0.22), rgba(168,85,247,0.22)); box-shadow: inset 0 0 0 1px rgba(107,158,255,0.3); }
   .list-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6b9eff, #b197fc); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900; color: #fff; flex-shrink: 0; text-transform: uppercase; position: relative; }
   .list-body { flex: 1; min-width: 0; }
   .list-name { font-size: 0.9rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .list-id { font-size: 0.68rem; color: #90b8ff; font-family: 'SF Mono', monospace; letter-spacing: 1px; margin-top: 1px; }
-  .list-preview { font-size: 0.73rem; color: #7a8ba8; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .list-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-  .list-remove { background: transparent; border: none; color: #7a8ba8; cursor: pointer; font-size: 0.95rem; padding: 4px 7px; border-radius: 6px; transition: all 0.2s ease; }
+  .list-remove { background: transparent; border: none; color: #7a8ba8; cursor: pointer; font-size: 0.9rem; padding: 5px 7px; border-radius: 6px; transition: all 0.2s ease; flex-shrink: 0; }
   .list-remove:hover { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .list-remove.block-btn { color: #fca5a5; }
+  .list-remove.block-btn:hover { background: rgba(239,68,68,0.3); }
+
+  /* UNREAD BADGE */
+  .unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 900;
+    border-radius: 11px;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    animation: pulseBadge 1.5s ease-in-out infinite;
+  }
+  @keyframes pulseBadge {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 12px rgba(34, 197, 94, 0.6); }
+    50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(34, 197, 94, 0.9); }
+  }
 
   .empty-state { text-align: center; padding: 40px 20px; color: #4a5568; }
   .empty-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5; }
@@ -143,7 +165,16 @@
   .msg-time { font-size: 0.62rem; opacity: 0.7; margin-top: 3px; text-align: right; font-weight: 600; }
   .msg.deleted { font-style: italic; opacity: 0.55; background: rgba(255,255,255,0.03) !important; border: 1px dashed rgba(255,255,255,0.15) !important; color: #94a3b8 !important; }
   .msg.deleted .msg-time { opacity: 0.5; }
-  .msg-actions-hint { font-size: 0.6rem; opacity: 0.4; margin-top: 2px; }
+
+  /* Blocked overlay */
+  .blocked-overlay {
+    text-align: center; color: #fca5a5; padding: 40px 20px; font-size: 0.9rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1;
+  }
+  .blocked-overlay .block-icon { font-size: 3rem; margin-bottom: 14px; }
+  .blocked-overlay .block-title { font-weight: 800; font-size: 1rem; margin-bottom: 6px; }
+  .blocked-overlay .block-sub { font-size: 0.78rem; color: #7a8ba8; }
 
   /* Message context menu */
   .msg-menu-bg { position: fixed; inset: 0; z-index: 200; display: none; }
@@ -161,9 +192,11 @@
   .chat-input { flex: 1; padding: 13px 17px; font-size: 0.92rem; background: rgba(0,0,0,0.45); border: 2px solid rgba(139,92,246,0.2); border-radius: 24px; color: #fff; outline: none; font-family: inherit; transition: all 0.2s ease; min-width: 0; }
   .chat-input:focus { border-color: #6b9eff; box-shadow: 0 0 0 4px rgba(107,158,255,0.1); }
   .chat-input::placeholder { color: #4a5568; }
+  .chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
   .send-btn { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #6d5dfc); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; box-shadow: 0 6px 20px rgba(59,130,246,0.5); }
   .send-btn:hover { transform: scale(1.08) rotate(-5deg); }
   .send-btn:active { transform: scale(0.94); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   .send-btn svg { width: 20px; height: 20px; }
 
   .search-results { position: absolute; top: 100%; left: 16px; right: 16px; background: rgba(15,20,35,0.98); border: 1px solid rgba(139,92,246,0.3); border-radius: 14px; margin-top: 6px; z-index: 30; box-shadow: 0 16px 40px rgba(0,0,0,0.7); max-height: 300px; overflow-y: auto; display: none; }
@@ -178,8 +211,9 @@
   .search-result-action:hover { transform: scale(1.05); }
   .search-result-action.sent { background: rgba(255,255,255,0.1); color: #90b8ff; cursor: default; }
   .search-result-action.sent:hover { transform: none; }
+  .search-result-action.blocked { background: rgba(239,68,68,0.2); color: #fca5a5; cursor: default; }
 
-  /* Settings / Edit profile */
+  /* Settings */
   .settings-section { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); display: none; }
   .settings-section.show { display: block; }
   .settings-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -211,6 +245,14 @@
   .confirm-btn.info { background: linear-gradient(135deg, #3b82f6, #6d5dfc); color: #fff; }
   .confirm-btn.info:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(59,130,246,0.5); }
 
+  .save-contact-input {
+    width: 100%; padding: 12px 14px; font-size: 0.9rem;
+    background: rgba(0,0,0,0.45); border: 2px solid rgba(139,92,246,0.3);
+    border-radius: 12px; color: #fff; outline: none;
+    font-family: inherit; margin-top: 10px;
+  }
+  .save-contact-input:focus { border-color: #6b9eff; box-shadow: 0 0 0 3px rgba(107,158,255,0.15); }
+
   .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -230,8 +272,6 @@
     .list-item { padding: 12px 14px; }
     .chat-header { padding: 11px 14px; }
     .messages-area { padding: 14px 12px; }
-    /* Hide keyboard when tapping empty area */
-    .messages-area { -webkit-tap-highlight-color: transparent; }
   }
   @media (max-width: 380px) {
     .brand-title { font-size: 1.25rem; }
@@ -239,7 +279,6 @@
     .list-avatar { width: 40px; height: 40px; font-size: 0.9rem; }
   }
 
-  /* Safe area for iPhone notch */
   @supports (padding: max(0px)) {
     .sidebar-header { padding-top: max(16px, env(safe-area-inset-top)); }
     .chat-header { padding-top: max(12px, env(safe-area-inset-top)); }
@@ -266,15 +305,9 @@
 
     <div id="signup-form">
       <div class="form-group">
-        <label class="form-label">Display Name</label>
-        <input type="text" class="form-input" id="signup-displayname" placeholder="e.g. Alex Kumar" maxlength="30" autocomplete="off">
-        <div class="form-hint">Ye naam aapke chats mein dikhega</div>
-      </div>
-
-      <div class="form-group">
         <label class="form-label">Username (unique)</label>
         <input type="text" class="form-input" id="signup-username" placeholder="e.g. alex_007" maxlength="20" autocomplete="off">
-        <div class="form-hint">Sirf letters, numbers, underscore (login/search ke liye)</div>
+        <div class="form-hint">Sirf lowercase letters, numbers, underscore</div>
       </div>
 
       <div class="form-group">
@@ -288,15 +321,15 @@
       <div class="form-group">
         <label class="form-label">Password</label>
         <input type="password" class="form-input" id="signup-password" placeholder="Create a strong password" autocomplete="new-password">
-        <div class="form-hint">Min 6 characters — strong rakho</div>
+        <div class="form-hint">Min 6 characters</div>
       </div>
 
       <div class="warning-box">
         <span class="warning-icon">⚠️</span>
         <div class="warning-text">
           <strong>ZAROORI — DHYAN SE PADHO:</strong><br>
-          1. <strong>Password bhool gaye toh ID hamesha ke liye chali jayegi</strong> — nayi ID banani padegi.<br>
-          2. <strong>1 mahine tak agar aapne koi message nahi bheja</strong>, toh aapki ID automatically delete ho jayegi.<br>
+          1. <strong>Password bhool gaye toh ID hamesha ke liye chali jayegi</strong>.<br>
+          2. <strong>1 mahine tak agar aapne koi message nahi bheja</strong>, toh ID auto-delete.<br>
           3. Apna ID aur password safe jagah likh kar rakho.
         </div>
       </div>
@@ -325,7 +358,6 @@
 <!-- MAIN APP -->
 <div class="app-container" id="app-container">
   <div class="app-window">
-    <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="user-avatar" id="my-avatar">?</div>
@@ -348,12 +380,7 @@
         </button>
       </div>
 
-      <!-- Settings (hidden by default) -->
       <div class="settings-section" id="settings-section">
-        <div class="settings-item">
-          <span class="settings-label">Display</span>
-          <input type="text" class="settings-value" id="edit-displayname" placeholder="Display name" maxlength="30">
-        </div>
         <div class="settings-item">
           <span class="settings-label">Username</span>
           <input type="text" class="settings-value" id="edit-username" placeholder="Username" maxlength="20">
@@ -380,7 +407,6 @@
       <div class="list-area" id="list-area"></div>
     </div>
 
-    <!-- CHAT -->
     <div class="chat-area" id="chat-area">
       <div class="chat-placeholder" id="chat-placeholder">
         <div class="chat-placeholder-icon">🔐</div>
@@ -424,7 +450,6 @@
   </div>
 </div>
 
-<!-- MESSAGE CONTEXT MENU -->
 <div class="msg-menu-bg" id="msg-menu-bg">
   <div class="msg-menu" id="msg-menu">
     <div class="msg-menu-item" data-action="delete-me">
@@ -438,10 +463,8 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- CONFIRM -->
 <div class="confirm-bg" id="confirm-bg">
   <div class="confirm-card">
     <div class="confirm-icon" id="confirm-icon">⚠️</div>
@@ -497,17 +520,6 @@ const DB = {
 };
 
 // ============================================================
-// SECURITY — Password hashing (SHA-256 via Web Crypto API)
-// ============================================================
-async function hashPassword(password, salt = 'privchat_salt_v1') {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + salt);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ============================================================
 // STATE
 // ============================================================
 let currentUser = null;
@@ -536,14 +548,6 @@ function formatTime(ts) {
   h = h % 12 || 12;
   return `${h}:${m} ${ampm}`;
 }
-function formatDate(ts) {
-  const d = new Date(ts);
-  const today = new Date();
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-}
 function getInitials(name) {
   if (!name) return '?';
   return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -560,7 +564,6 @@ function showToast(msg, type = 'info') {
   toast._t = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 function showConfirm(title, text, icon, buttons) {
-  // buttons: [{ label, class, onClick }]
   const bg = document.getElementById('confirm-bg');
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-text').textContent = text;
@@ -575,6 +578,41 @@ function showConfirm(title, text, icon, buttons) {
     actions.appendChild(btn);
   });
   bg.classList.add('show');
+}
+function showSaveContactPrompt(defaultName, onSave) {
+  const bg = document.getElementById('confirm-bg');
+  document.getElementById('confirm-icon').textContent = '💾';
+  document.getElementById('confirm-title').textContent = 'Save Contact';
+  document.getElementById('confirm-text').innerHTML = 'Save this contact as:<br><span style="font-size:0.7rem;color:#7a8ba8;">(Keep username or enter custom name)</span>';
+  const actions = document.getElementById('confirm-actions');
+  actions.innerHTML = '';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'save-contact-input';
+  input.value = defaultName;
+  input.maxLength = 30;
+  input.placeholder = 'Enter contact name';
+  actions.appendChild(input);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'confirm-btn cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => { bg.classList.remove('show'); });
+  actions.appendChild(cancelBtn);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'confirm-btn info';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', () => {
+    const val = input.value.trim() || defaultName;
+    bg.classList.remove('show');
+    onSave(val);
+  });
+  actions.appendChild(saveBtn);
+
+  bg.classList.add('show');
+  setTimeout(() => input.focus(), 200);
 }
 
 // ============================================================
@@ -603,7 +641,6 @@ function initAuth() {
   document.getElementById('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('signup-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSignup(); });
 
-  // Auto-login from localStorage
   const savedId = localStorage.getItem('privchat_id');
   if (savedId) {
     document.getElementById('login-id').value = savedId;
@@ -612,14 +649,12 @@ function initAuth() {
 }
 
 async function handleSignup() {
-  const displayName = document.getElementById('signup-displayname').value.trim();
   const username = document.getElementById('signup-username').value.trim().toLowerCase();
   const password = document.getElementById('signup-password').value;
   const id = document.getElementById('signup-id').textContent;
   const errEl = document.getElementById('signup-error');
   errEl.textContent = '';
 
-  if (!displayName || displayName.length < 2) { errEl.textContent = 'Display name must be at least 2 characters.'; return; }
   if (!username || username.length < 3) { errEl.textContent = 'Username must be at least 3 characters.'; return; }
   if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent = 'Username: sirf lowercase letters, numbers, underscore.'; return; }
   if (!password || password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
@@ -647,20 +682,23 @@ async function handleSignup() {
       }
     }
 
-    const pwHash = await hashPassword(password);
+    // PASSWORD SAVED AS PLAIN TEXT (as requested)
     const userData = {
-      id, username, displayName,
-      password: pwHash,
+      id, username,
+      password: password,
       createdAt: Date.now(),
       lastActive: Date.now(),
       lastMessageSent: 0,
       contacts: {},
       requests: {},
-      hiddenMessages: {} // message IDs user deleted for themselves
+      sentRequests: {},
+      hiddenMessages: {},
+      blocked: {},
+      unreadCounts: {}
     };
 
     await DB.set(`users/${id}`, userData);
-    await DB.set(`usernames/${username}`, id); // username index
+    await DB.set(`usernames/${username}`, id);
     showToast('Account created! ID: ' + id, 'success');
 
     setTimeout(() => loginUser(userData), 700);
@@ -691,8 +729,8 @@ async function handleLogin() {
       btn.disabled = false; btn.textContent = 'Login 🔓';
       return;
     }
-    const pwHash = await hashPassword(password);
-    if (user.password !== pwHash) {
+
+    if (user.password !== password) {
       errEl.textContent = 'Wrong password.';
       btn.disabled = false; btn.textContent = 'Login 🔓';
       return;
@@ -700,9 +738,15 @@ async function handleLogin() {
 
     await DB.update(`users/${id}`, { lastActive: Date.now() });
     user.lastActive = Date.now();
+    user.blocked = user.blocked || {};
+    user.contacts = user.contacts || {};
+    user.requests = user.requests || {};
+    user.sentRequests = user.sentRequests || {};
+    user.hiddenMessages = user.hiddenMessages || {};
+    user.unreadCounts = user.unreadCounts || {};
 
     localStorage.setItem('privchat_id', id);
-    showToast('Welcome back, ' + user.displayName + '!', 'success');
+    showToast('Welcome back, ' + user.username + '!', 'success');
     setTimeout(() => loginUser(user), 400);
   } catch (e) {
     console.error(e);
@@ -728,7 +772,6 @@ function initApp() {
     const sec = document.getElementById('settings-section');
     sec.classList.toggle('show');
     if (sec.classList.contains('show')) {
-      document.getElementById('edit-displayname').value = currentUser.displayName || '';
       document.getElementById('edit-username').value = currentUser.username || '';
     }
   });
@@ -745,7 +788,6 @@ function initApp() {
         document.getElementById('auth-screen').classList.remove('hide');
         document.getElementById('login-id').value = localStorage.getItem('privchat_id') || '';
         document.getElementById('login-password').value = '';
-        document.getElementById('signup-displayname').value = '';
         document.getElementById('signup-username').value = '';
         document.getElementById('signup-password').value = '';
         document.getElementById('signup-id').textContent = generateId();
@@ -794,7 +836,6 @@ function initApp() {
     }
   });
 
-  // Message context menu close
   document.getElementById('msg-menu-bg').addEventListener('click', (e) => {
     if (e.target.id === 'msg-menu-bg') closeMessageMenu();
   });
@@ -807,16 +848,14 @@ function initApp() {
 }
 
 function updateMyProfileUI() {
-  document.getElementById('my-avatar').textContent = getInitials(currentUser.displayName || currentUser.username);
-  document.getElementById('my-name').textContent = currentUser.displayName || currentUser.username;
+  document.getElementById('my-avatar').textContent = getInitials(currentUser.username);
+  document.getElementById('my-name').textContent = currentUser.username;
   document.getElementById('my-id').textContent = '#' + currentUser.id;
 }
 
 async function saveProfile() {
-  const newDisplay = document.getElementById('edit-displayname').value.trim();
   const newUsername = document.getElementById('edit-username').value.trim().toLowerCase();
 
-  if (!newDisplay || newDisplay.length < 2) { showToast('Display name too short', 'error'); return; }
   if (!newUsername || newUsername.length < 3) { showToast('Username too short', 'error'); return; }
   if (!/^[a-z0-9_]+$/.test(newUsername)) { showToast('Invalid username format', 'error'); return; }
 
@@ -835,8 +874,7 @@ async function saveProfile() {
       await DB.set(`usernames/${newUsername}`, currentUser.id);
     }
 
-    await DB.update(`users/${currentUser.id}`, { displayName: newDisplay, username: newUsername });
-    currentUser.displayName = newDisplay;
+    await DB.update(`users/${currentUser.id}`, { username: newUsername });
     currentUser.username = newUsername;
 
     updateMyProfileUI();
@@ -865,32 +903,36 @@ async function performSearch(query) {
     for (const uid in users) {
       if (uid === currentUser.id) continue;
       const u = users[uid];
-      if (uid.startsWith(query) ||
-          (u.username && u.username.toLowerCase().includes(query)) ||
-          (u.displayName && u.displayName.toLowerCase().includes(query))) {
+      if (uid.startsWith(query) || (u.username && u.username.toLowerCase().includes(query))) {
         matches.push(u);
         if (matches.length >= 8) break;
       }
     }
 
     if (matches.length === 0) {
-      resultsEl.innerHTML = '<div class="search-result-item"><div class="search-result-body"><div class="search-result-name">No users found</div><div class="search-result-id">Try a different ID or name</div></div></div>';
+      resultsEl.innerHTML = '<div class="search-result-item"><div class="search-result-body"><div class="search-result-name">No users found</div><div class="search-result-id">Try a different ID or username</div></div></div>';
       return;
     }
 
     resultsEl.innerHTML = matches.map(u => {
       const isContact = currentUser.contacts && currentUser.contacts[u.id];
-      const isRequested = currentUser.requests && currentUser.requests[u.id];
+      const isSentPending = currentUser.sentRequests && currentUser.sentRequests[u.id];
+      const iBlocked = currentUser.blocked && currentUser.blocked[u.id];
+      const theyBlocked = u.blocked && u.blocked[currentUser.id];
+
       let action;
-      if (isContact) action = '<button class="search-result-action sent">Chat ✓</button>';
-      else if (isRequested) action = '<button class="search-result-action sent">Sent ✓</button>';
+      if (iBlocked) action = '<button class="search-result-action blocked">Blocked 🚫</button>';
+      else if (theyBlocked) action = '<button class="search-result-action sent">Unavailable</button>';
+      else if (isContact) action = '<button class="search-result-action sent">Chat ✓</button>';
+      else if (isSentPending) action = '<button class="search-result-action sent">Pending ⏳</button>';
       else action = `<button class="search-result-action" data-action="request" data-uid="${u.id}">Send Request</button>`;
+
       return `
         <div class="search-result-item" data-uid="${u.id}">
-          <div class="list-avatar" style="width:36px;height:36px;font-size:0.85rem;">${getInitials(u.displayName || u.username)}</div>
+          <div class="list-avatar" style="width:36px;height:36px;font-size:0.85rem;">${getInitials(u.username)}</div>
           <div class="search-result-body">
-            <div class="search-result-name">${escapeHtml(u.displayName || u.username)}</div>
-            <div class="search-result-id">#${u.id} · @${escapeHtml(u.username)}</div>
+            <div class="search-result-name">${escapeHtml(u.username)}</div>
+            <div class="search-result-id">#${u.id}</div>
           </div>
           ${action}
         </div>`;
@@ -909,7 +951,7 @@ async function performSearch(query) {
         const uid = item.dataset.uid;
         if (currentUser.contacts && currentUser.contacts[uid]) {
           const contact = currentUser.contacts[uid];
-          openChat(contact.id, contact.displayName || contact.username);
+          openChat(contact.id, contact.savedName || contact.username);
           document.getElementById('search-input').value = '';
           resultsEl.classList.remove('show');
         }
@@ -923,34 +965,53 @@ async function performSearch(query) {
 
 async function sendRequest(targetUser, btn) {
   if (!currentUser) return;
+
+  if (targetUser.blocked && targetUser.blocked[currentUser.id]) {
+    showToast('You are blocked by this user.', 'error');
+    return;
+  }
+  if (currentUser.blocked && currentUser.blocked[targetUser.id]) {
+    showToast('You have blocked this user.', 'error');
+    return;
+  }
+
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
+
   try {
-    const myRequests = { ...(currentUser.requests || {}) };
-    myRequests[targetUser.id] = { id: targetUser.id, username: targetUser.username, displayName: targetUser.displayName, timestamp: Date.now() };
+    const now = Date.now();
+
+    const mySent = { ...(currentUser.sentRequests || {}) };
+    mySent[targetUser.id] = { id: targetUser.id, username: targetUser.username, timestamp: now };
 
     const targetFresh = await DB.get(`users/${targetUser.id}`);
-    if (!targetFresh) { showToast('User no longer exists', 'error'); btn.disabled = false; btn.textContent = 'Send Request'; return; }
-    const targetRequests = { ...(targetFresh.requests || {}) };
-    targetRequests[currentUser.id] = { id: currentUser.id, username: currentUser.username, displayName: currentUser.displayName, timestamp: Date.now() };
+    if (!targetFresh) {
+      showToast('User no longer exists', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Send Request';
+      return;
+    }
+    const theirRequests = { ...(targetFresh.requests || {}) };
+    theirRequests[currentUser.id] = { id: currentUser.id, username: currentUser.username, timestamp: now };
 
-    await DB.update(`users/${currentUser.id}`, { requests: myRequests, lastActive: Date.now() });
-    await DB.update(`users/${targetUser.id}`, { requests: targetRequests });
+    await DB.update(`users/${currentUser.id}`, { sentRequests: mySent, lastActive: now });
+    await DB.update(`users/${targetUser.id}`, { requests: theirRequests });
 
-    currentUser.requests = myRequests;
+    currentUser.sentRequests = mySent;
     btn.className = 'search-result-action sent';
-    btn.textContent = 'Sent ✓';
+    btn.textContent = 'Pending ⏳';
     btn.disabled = false;
-    showToast('Request sent to ' + (targetUser.displayName || targetUser.username), 'success');
+    showToast('Request sent to ' + targetUser.username + ' (waiting for accept)', 'success');
   } catch (e) {
     console.error(e);
     showToast('Failed to send request', 'error');
-    btn.disabled = false; btn.textContent = 'Send Request';
+    btn.disabled = false;
+    btn.textContent = 'Send Request';
   }
 }
 
 // ============================================================
-// REQUEST ACCEPT/REJECT
+// ACCEPT / REJECT REQUEST
 // ============================================================
 async function acceptRequest(fromId) {
   if (!currentUser) return;
@@ -958,26 +1019,50 @@ async function acceptRequest(fromId) {
     const fromUser = await DB.get(`users/${fromId}`);
     if (!fromUser) { showToast('User no longer exists', 'error'); return; }
 
-    const myContacts = { ...(currentUser.contacts || {}) };
-    myContacts[fromId] = { id: fromId, username: fromUser.username, displayName: fromUser.displayName, addedAt: Date.now() };
+    showSaveContactPrompt(fromUser.username, async (savedName) => {
+      try {
+        const myContacts = { ...(currentUser.contacts || {}) };
+        myContacts[fromId] = {
+          id: fromId,
+          username: fromUser.username,
+          savedName: savedName,
+          addedAt: Date.now()
+        };
 
-    const theirContacts = { ...(fromUser.contacts || {}) };
-    theirContacts[currentUser.id] = { id: currentUser.id, username: currentUser.username, displayName: currentUser.displayName, addedAt: Date.now() };
+        const theirContacts = { ...(fromUser.contacts || {}) };
+        theirContacts[currentUser.id] = {
+          id: currentUser.id,
+          username: currentUser.username,
+          savedName: currentUser.username,
+          addedAt: Date.now()
+        };
 
-    const myRequests = { ...(currentUser.requests || {}) };
-    delete myRequests[fromId];
+        const myRequests = { ...(currentUser.requests || {}) };
+        delete myRequests[fromId];
 
-    const theirRequests = { ...(fromUser.requests || {}) };
-    delete theirRequests[currentUser.id];
+        const theirSent = { ...(fromUser.sentRequests || {}) };
+        delete theirSent[currentUser.id];
 
-    await DB.update(`users/${currentUser.id}`, { contacts: myContacts, requests: myRequests, lastActive: Date.now() });
-    await DB.update(`users/${fromId}`, { contacts: theirContacts, requests: theirRequests });
+        await DB.update(`users/${currentUser.id}`, {
+          contacts: myContacts,
+          requests: myRequests,
+          lastActive: Date.now()
+        });
+        await DB.update(`users/${fromId}`, {
+          contacts: theirContacts,
+          sentRequests: theirSent
+        });
 
-    currentUser.contacts = myContacts;
-    currentUser.requests = myRequests;
+        currentUser.contacts = myContacts;
+        currentUser.requests = myRequests;
 
-    showToast('Request accepted!', 'success');
-    renderList();
+        showToast('Contact saved as "' + savedName + '"', 'success');
+        renderList();
+      } catch (e) {
+        console.error(e);
+        showToast('Failed to accept', 'error');
+      }
+    });
   } catch (e) {
     console.error(e);
     showToast('Failed to accept', 'error');
@@ -991,10 +1076,11 @@ async function rejectRequest(fromId) {
     const myRequests = { ...(currentUser.requests || {}) };
     delete myRequests[fromId];
     await DB.update(`users/${currentUser.id}`, { requests: myRequests });
+
     if (fromUser) {
-      const theirRequests = { ...(fromUser.requests || {}) };
-      delete theirRequests[currentUser.id];
-      await DB.update(`users/${fromId}`, { requests: theirRequests });
+      const theirSent = { ...(fromUser.sentRequests || {}) };
+      delete theirSent[currentUser.id];
+      await DB.update(`users/${fromId}`, { sentRequests: theirSent });
     }
     currentUser.requests = myRequests;
     showToast('Request rejected', 'info');
@@ -1020,16 +1106,24 @@ function renderList() {
       listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">No chats yet.<br>Search a 6-digit ID to start.</div></div>`;
       return;
     }
-    listEl.innerHTML = arr.map(c => `
-      <div class="list-item" data-uid="${c.id}">
-        <div class="list-avatar">${getInitials(c.displayName || c.username)}</div>
-        <div class="list-body">
-          <div class="list-name">${escapeHtml(c.displayName || c.username)}</div>
-          <div class="list-id">#${c.id}</div>
+    const unreadCounts = currentUser.unreadCounts || {};
+    listEl.innerHTML = arr.map(c => {
+      const roomId = getRoomId(currentUser.id, c.id);
+      const unread = unreadCounts[roomId] || 0;
+      const unreadBadge = unread > 0 ? `<span class="unread-badge">${unread > 99 ? '99+' : unread}</span>` : '';
+      return `
+        <div class="list-item" data-uid="${c.id}">
+          <div class="list-avatar">${getInitials(c.savedName || c.username)}</div>
+          <div class="list-body">
+            <div class="list-name">${escapeHtml(c.savedName || c.username)}</div>
+            <div class="list-id">#${c.id}</div>
+          </div>
+          ${unreadBadge}
+          <button class="list-remove block-btn" data-block="${c.id}" title="Block">🚫</button>
+          <button class="list-remove" data-remove="${c.id}" title="Remove">✕</button>
         </div>
-        <button class="list-remove" data-remove="${c.id}" title="Remove">✕</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } else {
     const arr = Object.values(currentUser.requests || {});
     if (arr.length === 0) {
@@ -1038,9 +1132,9 @@ function renderList() {
     }
     listEl.innerHTML = arr.map(r => `
       <div class="list-item" data-req="${r.id}">
-        <div class="list-avatar">${getInitials(r.displayName || r.username)}</div>
+        <div class="list-avatar">${getInitials(r.username)}</div>
         <div class="list-body">
-          <div class="list-name">${escapeHtml(r.displayName || r.username)}</div>
+          <div class="list-name">${escapeHtml(r.username)}</div>
           <div class="list-id">#${r.id}</div>
         </div>
         <div class="request-actions">
@@ -1057,7 +1151,7 @@ function renderList() {
     item.addEventListener('click', () => {
       const uid = item.dataset.uid;
       const contact = currentUser.contacts[uid];
-      if (contact) openChat(contact.id, contact.displayName || contact.username);
+      if (contact) openChat(contact.id, contact.savedName || contact.username);
     });
   });
 
@@ -1067,7 +1161,7 @@ function renderList() {
       const uid = b.dataset.remove;
       const contact = currentUser.contacts[uid];
       if (!contact) return;
-      showConfirm('Remove contact?', 'You will not be able to message ' + (contact.displayName || contact.username) + ' unless they request again.', '🗑️', [
+      showConfirm('Remove contact?', 'You will not be able to message ' + (contact.savedName || contact.username) + ' unless they request again.', '🗑️', [
         { label: 'Cancel', class: 'cancel' },
         { label: 'Remove', class: 'danger', onClick: async () => {
           const contacts = { ...currentUser.contacts };
@@ -1082,6 +1176,41 @@ function renderList() {
           currentUser.contacts = contacts;
           if (currentChat && currentChat.id === uid) { currentChat = null; showChatPlaceholder(); }
           showToast('Contact removed', 'info');
+          renderList();
+        }}
+      ]);
+    });
+  });
+
+  listEl.querySelectorAll('[data-block]').forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const uid = b.dataset.block;
+      const contact = currentUser.contacts[uid];
+      if (!contact) return;
+      showConfirm('Block ' + (contact.savedName || contact.username) + '?',
+        'They will not be able to send you messages. If they try, they will see "You are blocked".',
+        '🚫', [
+        { label: 'Cancel', class: 'cancel' },
+        { label: 'Block', class: 'danger', onClick: async () => {
+          const blocked = { ...(currentUser.blocked || {}) };
+          blocked[uid] = { id: uid, blockedAt: Date.now() };
+          await DB.update(`users/${currentUser.id}`, { blocked });
+
+          const contacts = { ...currentUser.contacts };
+          delete contacts[uid];
+          await DB.update(`users/${currentUser.id}`, { contacts });
+
+          const other = await DB.get(`users/${uid}`);
+          if (other) {
+            const theirContacts = { ...(other.contacts || {}) };
+            delete theirContacts[currentUser.id];
+            await DB.update(`users/${uid}`, { contacts: theirContacts });
+          }
+          currentUser.blocked = blocked;
+          currentUser.contacts = contacts;
+          if (currentChat && currentChat.id === uid) { currentChat = null; showChatPlaceholder(); }
+          showToast('User blocked', 'success');
           renderList();
         }}
       ]);
@@ -1106,8 +1235,18 @@ function openChat(uid, name) {
   document.getElementById('chat-area').classList.add('mobile-show');
 
   document.querySelectorAll('.list-item').forEach(i => i.classList.toggle('active', i.dataset.uid === uid));
+
+  // Reset unread count for this room
+  const roomId = getRoomId(currentUser.id, uid);
+  const unread = { ...(currentUser.unreadCounts || {}) };
+  if (unread[roomId]) {
+    unread[roomId] = 0;
+    DB.update(`users/${currentUser.id}`, { unreadCounts: unread });
+    currentUser.unreadCounts = unread;
+  }
+
   renderMessages();
-  // Focus input after slight delay (mobile keyboard)
+  renderList();
   setTimeout(() => document.getElementById('chat-input').focus(), 300);
 }
 
@@ -1123,16 +1262,42 @@ function showChatPlaceholder() {
 // ============================================================
 async function sendMessage() {
   if (!currentUser || !currentChat) return;
+
+  if (currentUser.blocked && currentUser.blocked[currentChat.id]) {
+    showToast('You have blocked this user. Unblock to message.', 'error');
+    return;
+  }
+
+  try {
+    const otherUser = await DB.get(`users/${currentChat.id}`);
+    if (otherUser && otherUser.blocked && otherUser.blocked[currentUser.id]) {
+      showToast('You are blocked. You cannot send messages.', 'error');
+      return;
+    }
+  } catch (e) { /* ignore */ }
+
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+
   const roomId = getRoomId(currentUser.id, currentChat.id);
   const message = { from: currentUser.id, to: currentChat.id, text, timestamp: Date.now() };
+
   try {
     await DB.push(`messages/${roomId}`, message);
+
     await DB.update(`users/${currentUser.id}`, { lastMessageSent: Date.now(), lastActive: Date.now() });
     currentUser.lastMessageSent = Date.now();
+
+    // Increment unread count for recipient
+    const recipient = await DB.get(`users/${currentChat.id}`);
+    if (recipient) {
+      const unread = { ...(recipient.unreadCounts || {}) };
+      unread[roomId] = (unread[roomId] || 0) + 1;
+      await DB.update(`users/${currentChat.id}`, { unreadCounts: unread });
+    }
+
     renderMessages();
   } catch (e) {
     console.error(e);
@@ -1143,6 +1308,45 @@ async function sendMessage() {
 async function renderMessages() {
   if (!currentUser || !currentChat) return;
   const area = document.getElementById('messages-area');
+
+  if (currentUser.blocked && currentUser.blocked[currentChat.id]) {
+    area.innerHTML = `
+      <div class="blocked-overlay">
+        <div class="block-icon">🚫</div>
+        <div class="block-title">You blocked this user</div>
+        <div class="block-sub">Unblock from contacts to message again</div>
+      </div>`;
+    document.getElementById('chat-input').disabled = true;
+    document.getElementById('chat-input').placeholder = 'You blocked this user';
+    document.getElementById('send-btn').disabled = true;
+    return;
+  }
+
+  let theyBlocked = false;
+  try {
+    const otherUser = await DB.get(`users/${currentChat.id}`);
+    if (otherUser && otherUser.blocked && otherUser.blocked[currentUser.id]) {
+      theyBlocked = true;
+    }
+  } catch (e) { /* ignore */ }
+
+  if (theyBlocked) {
+    area.innerHTML = `
+      <div class="blocked-overlay">
+        <div class="block-icon">🚫</div>
+        <div class="block-title">You are blocked</div>
+        <div class="block-sub">You cannot send messages to this user</div>
+      </div>`;
+    document.getElementById('chat-input').disabled = true;
+    document.getElementById('chat-input').placeholder = 'You are blocked';
+    document.getElementById('send-btn').disabled = true;
+    return;
+  } else {
+    document.getElementById('chat-input').disabled = false;
+    document.getElementById('chat-input').placeholder = 'Type a message...';
+    document.getElementById('send-btn').disabled = false;
+  }
+
   const roomId = getRoomId(currentUser.id, currentChat.id);
   try {
     const data = await DB.get(`messages/${roomId}`);
@@ -1152,7 +1356,6 @@ async function renderMessages() {
       return;
     }
     const msgs = Object.keys(data).map(k => ({ ...data[k], _id: k })).sort((a, b) => a.timestamp - b.timestamp);
-    // Filter out hidden (deleted for me)
     const visible = msgs.filter(m => !hidden[roomId + '_' + m._id]);
     if (visible.length === 0) {
       area.innerHTML = '<div style="text-align:center;color:#4a5568;padding:20px;font-size:0.8rem;">No messages yet. Say hi! 👋</div>';
@@ -1166,7 +1369,6 @@ async function renderMessages() {
       return `<div class="${cls}" data-msgid="${m._id}" data-from="${m.from}">${content}<div class="msg-time">${formatTime(m.timestamp)}</div></div>`;
     }).join('');
     area.scrollTop = area.scrollHeight;
-    // Attach click handlers
     area.querySelectorAll('.msg').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1177,7 +1379,7 @@ async function renderMessages() {
 }
 
 // ============================================================
-// MESSAGE CONTEXT MENU (Delete for me / everyone)
+// MESSAGE MENU
 // ============================================================
 function openMessageMenu(msgId, fromId, el) {
   messageMenuTarget = { msgId, fromId };
@@ -1185,9 +1387,7 @@ function openMessageMenu(msgId, fromId, el) {
   const menu = document.getElementById('msg-menu');
   const rect = el.getBoundingClientRect();
   const isMine = fromId === currentUser.id;
-  // Show "Delete for everyone" only if it's my message
   document.getElementById('menu-delete-all').style.display = isMine ? 'flex' : 'none';
-  // Position menu near the message
   const menuW = 220, menuH = isMine ? 110 : 60;
   let left = rect.right - menuW;
   let top = rect.bottom + 6;
@@ -1208,7 +1408,6 @@ async function handleMessageAction(action) {
   closeMessageMenu();
 
   if (action === 'delete-me') {
-    // Hide for me only — store in my user record
     const hidden = { ...(currentUser.hiddenMessages || {}) };
     hidden[roomId + '_' + msgId] = Date.now();
     await DB.update(`users/${currentUser.id}`, { hiddenMessages: hidden });
@@ -1232,11 +1431,11 @@ async function handleMessageAction(action) {
 }
 
 // ============================================================
-// CLEAR CHAT (both sides visible to me)
+// CLEAR CHAT
 // ============================================================
 function clearChat() {
   if (!currentUser || !currentChat) return;
-  showConfirm('Clear chat?', 'All messages with ' + currentChat.name + ' will be removed from YOUR view only. The other person will still see them.', '🗑️', [
+  showConfirm('Clear chat?', 'All messages with ' + currentChat.name + ' will be removed from YOUR view only.', '🗑️', [
     { label: 'Cancel', class: 'cancel' },
     { label: 'Clear', class: 'danger', onClick: async () => {
       const roomId = getRoomId(currentUser.id, currentChat.id);
@@ -1259,22 +1458,34 @@ async function pollUpdates() {
   try {
     const fresh = await DB.get(`users/${currentUser.id}`);
     if (!fresh) return;
-    const oldReqCount = Object.keys(currentUser.requests || {}).length;
-    const newReqCount = Object.keys(fresh.requests || {}).length;
 
     currentUser.requests = fresh.requests || {};
     currentUser.contacts = fresh.contacts || {};
     currentUser.hiddenMessages = fresh.hiddenMessages || {};
+    currentUser.blocked = fresh.blocked || {};
+    currentUser.sentRequests = fresh.sentRequests || {};
+    currentUser.unreadCounts = fresh.unreadCounts || {};
 
     await DB.update(`users/${currentUser.id}`, { lastActive: Date.now() });
 
-    if (activeTab === 'requests' || newReqCount !== oldReqCount) renderList();
-    if (currentChat) renderMessages();
+    renderList();
+
+    if (currentChat) {
+      // Mark as read when chat is open
+      const roomId = getRoomId(currentUser.id, currentChat.id);
+      const unread = { ...(currentUser.unreadCounts || {}) };
+      if (unread[roomId]) {
+        unread[roomId] = 0;
+        await DB.update(`users/${currentUser.id}`, { unreadCounts: unread });
+        currentUser.unreadCounts = unread;
+      }
+      renderMessages();
+    }
   } catch (e) { /* silent */ }
 }
 
 // ============================================================
-// AUTO-DELETE INACTIVE (1 month + no messages)
+// AUTO-DELETE INACTIVE
 // ============================================================
 async function cleanupInactive() {
   try {
@@ -1390,7 +1601,7 @@ setTimeout(cleanupInactive, 5000);
 // START
 // ============================================================
 initAuth();
-console.log('🔐 PrivChat Secure + Mobile Ready');
+console.log('🔐 PrivChat — Full Update Ready');
 </script>
 </body>
 </html>
